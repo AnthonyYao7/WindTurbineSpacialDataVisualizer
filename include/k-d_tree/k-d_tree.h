@@ -11,14 +11,7 @@
 #include <cstdint>
 #include <stack>
 
-typedef uint64_t u64;
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t  u8;
-typedef int64_t i64;
-typedef int32_t i32;
-typedef int16_t i16;
-typedef int8_t i8;
+#include "tree_utils.h"
 
 
 // implementation of k-d tree without support for insertion and deletion, i.e., only tree creation from some points and searching
@@ -88,11 +81,23 @@ public:
 
     KD_Tree(const std::vector<std::array<T, K>>& points)
     {
-        auto a = points;
+        std::vector<std::array<T, K>> a = points;
         root = create_tree(a.begin(), a.end(), 0);
     }
 
-    KD_Tree() = default;
+    void destructor_helper(KDTNode* node)
+    {
+        if (node == nullptr) return;
+
+        destructor_helper(node->left);
+        destructor_helper(node->right);
+        delete node;
+    }
+
+    ~KD_Tree()
+    {
+        destructor_helper(root);
+    }
 
     std::vector<std::array<T, K>> range_query(std::array<std::array<T, 2>, K>& range)
     {

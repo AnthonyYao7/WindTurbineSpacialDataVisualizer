@@ -9,7 +9,7 @@
 #include <algorithm>
 
 #include <gtest/gtest.h>
-#include "k-d_tree.h"
+#include "k-d_tree/k-d_tree.h"
 
 #define NUM_ITERATIONS 1
 #define TEST_POINTS 100000

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(k-d_tree_tests)
+project(range_tree_tests)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
@@ -17,26 +17,26 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(
-        kdtreetest
-        k-d_tree_tests.cpp
+        rangetreetest
+        range_tree_tests.cpp
 )
 
 target_include_directories(
-        kdtreetest PUBLIC ${CMAKE_SOURCE_DIR}/include
+        rangetreetest PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
 
 target_link_libraries(
-        kdtreetest
+        rangetreetest
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(kdtreetest)
+gtest_discover_tests(rangetreetest)
 
 target_link_libraries(
-        kdtreetest
+        rangetreetest
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(kdtreetest)
+gtest_discover_tests(rangetreetest)

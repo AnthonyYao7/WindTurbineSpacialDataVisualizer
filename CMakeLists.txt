@@ -3,3 +3,4 @@ project(DSA_p3)
 
 add_subdirectory(ApplicationMain)
 add_subdirectory(tests/k-d_tree_tests)
+add_subdirectory(tests/range_tree_tests)

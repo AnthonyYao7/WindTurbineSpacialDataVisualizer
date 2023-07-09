@@ -2,7 +2,7 @@
 #include <vector>
 #include <array>
 
-#include "../k-d_tree/k-d_tree.h"
+#include "k-d_tree/k-d_tree.h"
 
 using namespace std;
 #define COUNT 10
