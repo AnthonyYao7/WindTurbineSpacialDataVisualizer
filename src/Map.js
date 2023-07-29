@@ -17,7 +17,7 @@ function MyMap() {
           const control = new L.Control.Draw({
             draw: {
               polyline: false,
-              polygon: true,
+              polygon: false,
               circle: false,
               marker: false,
               rectangle: true,
@@ -38,7 +38,7 @@ function MyMap() {
             const type = e.layerType;
             const layer = e.layer;
   
-            if (type === 'polygon' || type === 'rectangle') {
+            if (type === 'rectangle') {
               const latlngs = layer.getLatLngs();
               console.log(`${type} corners: `, latlngs);
   
