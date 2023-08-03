@@ -27,7 +27,8 @@ function MyMap() {
           map.addControl(control);
         }
       }, [map, drawControl]);
-  
+
+    // GeoJSON file of the US taken from 'https://eric.clst.org/tech/usgeojson/'
       useEffect(() => {
         axios.get(process.env.PUBLIC_URL + '/data/custom.geo.json')
         .then(res => {
