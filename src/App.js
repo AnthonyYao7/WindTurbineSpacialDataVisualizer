@@ -6,20 +6,23 @@ import axios from 'axios';
 
 
 function App() {
+  const [bounds, setBounds] = useState(null);
   const [tableData, setTableData] = useState(null);
 
   // This useEffect hook will fetch the data when the component is mounted.
   useEffect(() => {
-    // Use axios or fetch to get the data from your server or database.
-    // This is just a placeholder and should be replaced with your actual API call.
-    axios.get("/api/your-endpoint")
-      .then((response) => {
-        setTableData(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+    if (bounds) {
+        // Make sure your backend accepts JSON in the request body.
+        axios.post("http://localhost:8080/query", {coordinates: bounds.join(",")})
+            .then((response) => {
+                setTableData(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    }
+}, [bounds]);
+
 
   return (
     <div className="App">
@@ -31,48 +34,38 @@ function App() {
         <p className="instructions">
           Select the rectangle tool, and draw a region anywhere inside the United States. The data for all the wind turbines within your selected region will then be displayed for you below the map.
         </p>
-        <MyMap />
+        <MyMap bounds={bounds} setBounds={setBounds} />
         <a className="main-title">
           Wind Turbine Data
         </a>
         {tableData && 
-          <table>
-            <thead>
-              <tr>
-                <th>State</th>
-                <th>County</th>
-                <th>Year</th>
-                <th>Turbine's Capacity</th>
-                <th>Turbine's Hub Height</th>
-                <th>Turbine's Rotor Diameter</th>
-                <th>Swept Area</th>
-                <th>Turbine's Total Height</th>
-                <th>Project's Capacity</th>
-                <th>Number of Turbines in Project</th>
-                <th>Turbine's Latitude</th>
-                <th>Turbine's Longitude</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.state}</td>
-                  <td>{item.county}</td>
-                  <td>{item.year}</td>
-                  <td>{item.turbineCapacity}</td>
-                  <td>{item.turbineHubHeight}</td>
-                  <td>{item.turbineRotorDiameter}</td>
-                  <td>{item.sweptArea}</td>
-                  <td>{item.turbineTotalHeight}</td>
-                  <td>{item.projectCapacity}</td>
-                  <td>{item.numberOfTurbinesInProject}</td>
-                  <td>{item.turbineLatitude}</td>
-                  <td>{item.turbineLongitude}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        }
+  <table>
+    <thead>
+      <tr>
+        <th>Earliest built</th>
+        <th>Latest built</th>
+        <th>Average capacity</th>
+        <th>Tallest turbine</th>
+        <th>Shortest turbine</th>
+        <th>Average rotor diameter</th>
+        <th>Turbine density</th>
+        <th>Area of selection</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{tableData["Earliest built"]}</td>
+        <td>{tableData["Latest built"]}</td>
+        <td>{tableData["Average capacity"]}</td>
+        <td>{tableData["Tallest turbine"]}</td>
+        <td>{tableData["Shortest turbine"]}</td>
+        <td>{tableData["Average rotor diameter"]}</td>
+        <td>{tableData["Turbine density"]}</td>
+        <td>{tableData["Area of selection"]}</td>
+      </tr>
+    </tbody>
+  </table>
+}
       </header>
     </div>
   );

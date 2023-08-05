@@ -9,7 +9,8 @@ import './Map.css';
 
 let drawnLayers = new L.FeatureGroup();
 
-function MyMap() {
+
+function MyMap({ bounds, setBounds }) {
   const [drawControl, setDrawControl] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -50,6 +51,12 @@ function MyMap() {
           const type = e.layerType;
           const layer = e.layer;
           setErrorMessage('');
+
+          if (errorMessage === '' && type === 'rectangle') {
+            const bounds = layer.getBounds();
+            setBounds([bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat]);
+        }
+        
         
           if (type === 'rectangle') {
             const latlngs = layer.getLatLngs();
