@@ -17,6 +17,10 @@ public:
     [[nodiscard]] double as_double() const;
     [[nodiscard]] long long as_int() const;
     [[nodiscard]] const std::string& as_string() const;
+
+    operator double() const;
+    operator long long() const;
+    operator std::string() const;
 };
 
 

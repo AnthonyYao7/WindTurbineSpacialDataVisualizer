@@ -106,7 +106,7 @@ public:
     }
 
     
-    std::vector<V> range_query(std::array<std::array<T, 2>, P>& range)
+    std::vector<V> range_query(const std::array<std::array<T, 2>, P>& range)
     {
         std::vector<V> ret;
 
@@ -221,7 +221,7 @@ public:
         root = create_tree(sorted_points.begin(), sorted_points.end());
     }
 
-    std::vector<V> range_query(std::array<std::array<T, 2>, P>& range)
+    std::vector<V> range_query(const std::array<std::array<T, 2>, P>& range)
     {
         std::vector<V> ret;
 

@@ -37,3 +37,18 @@ const std::string& DataColumn::as_string() const
 {
     return this->data;
 }
+
+DataColumn::operator double() const
+{
+    return this->as_double();
+}
+
+DataColumn::operator long long() const
+{
+    return this->as_int();
+}
+
+DataColumn::operator std::string() const
+{
+    return this->as_string();
+}

@@ -10,6 +10,7 @@
 
 #include "DataColumn.h"
 
+
 class DataRow
 {
 std::vector<std::string> data;

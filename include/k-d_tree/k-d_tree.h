@@ -107,7 +107,7 @@ public:
         destructor_helper(root);
     }
 
-    std::vector<V> range_query(std::array<std::array<T, 2>, K>& range)
+    std::vector<V> range_query(const std::array<std::array<T, 2>, K>& range)
     {
         std::vector<V> ret;
         std::stack<KDTNode*> cs;

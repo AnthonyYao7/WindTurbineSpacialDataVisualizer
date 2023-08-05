@@ -7,11 +7,11 @@
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
-
-#include <boost/json.hpp>
+#include <chrono>
 
 #include "trees.h"
 #include "CSV_File.h"
+#include "DataRow.h"
 
 #include "SimpleWebServer/server_http.hpp"
 
@@ -261,6 +261,13 @@ struct WindmillDataset
 };
 
 
+double rectangular_area(double lat1, double lat2, double lon1, double lon2)
+{
+
+}
+
+
+
 
 int main()
 {
@@ -328,85 +335,56 @@ int main()
         *response << get_content(p);
     };
 
-//    server.resource["^/query"]["POST"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
-//        std::string content = request->content.string();
-//
-//        /*
-//         * the query looks like this:
-//         * {"p1": {"lat": lat, "lon": lon},
-//         *  "p2": {"lat": lat, "lon": lon}}
-//         */
-//
-//        boost::json::value q = boost::json::parse(content);
-//
-//        boost::json::object q_obj = q.as_object();
-//
-//        boost::json::value* p1 = q_obj.if_contains("p1");
-//
-//        Coordinates upper_left_corner{};
-//
-//        {
-//            if (not p1)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            boost::json::object coord_pair = p1->as_object();
-//            auto lat = coord_pair.if_contains("lat");
-//
-//            if (not lat)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            upper_left_corner.lat = lat->as_double();
-//
-//            auto lon = coord_pair.if_contains("lon");
-//
-//            if (not lon)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            upper_left_corner.lon = lon->as_double();
-//        }
-//
-//        boost::json::value* p2 = q_obj.if_contains("p2");
-//
-//        Coordinates bottom_right_corner{};
-//
-//        {
-//            if (not p2)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            boost::json::object coord_pair = p1->as_object();
-//            auto lat = coord_pair.if_contains("lat");
-//
-//            if (not lat)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            upper_left_corner.lat = lat->as_double();
-//
-//            auto lon = coord_pair.if_contains("lon");
-//
-//            if (not lon)
-//            {
-//                *response << "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
-//                return;
-//            }
-//
-//            upper_left_corner.lon = lon->as_double();
-//        }
-//    };
+    server.resource["^/query"]["POST"] = [&rtree, &kdtree] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
+        std::string content = request->content.string();
+
+        /*
+         * the query looks like this:
+         * <lat1>,<lat2>,<lon1>,<lon2>
+         */
+
+        DataRow coords(content);
+
+        double lat1 = coords[0], lat2 = coords[1], lon1 = coords[2], lon2 = coords[3];
+
+        using namespace std::chrono;
+
+        auto start = high_resolution_clock::now();
+        std::vector<WindmillData> rtree_results = rtree.range_query({{{lat1, lat2}, {lon1, lon2}}});
+        auto stop = high_resolution_clock::now();
+
+        long long rangetree_took = duration_cast<milliseconds>(stop - start).count();
+
+        start = high_resolution_clock::now();
+        std::vector<WindmillData> kdtree_results = kdtree.range_query({{{lat1, lat2}, {lon1, lon2}}});
+        stop = high_resolution_clock::now();
+
+        long long kdtree_took = duration_cast<milliseconds>(stop - start).count();
+
+        /*
+         * List of statistics to display:
+         * min year, max year
+         * average capacity
+         * tallest turbine, shortest turbine,
+         * average rotor diameter
+         * number of turbines
+         * turbine density
+         * area selected
+         */
+
+        /*
+         * Format output data like this:
+         * {"Earliest built": <num>,
+         *  "Latest built": <num>,
+         *  "Average capacity": <num>,
+         *  "Tallest turbine": <num>,
+         *  "Shortest turbine":
+         *  "Average rotor diameter",
+         *  "Turbine density",
+         *  "Area of selection"}
+         */
+
+    };
 
     std::thread server_thread([&server]() {
         server.start();
