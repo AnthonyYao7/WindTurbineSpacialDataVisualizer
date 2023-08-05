@@ -13,8 +13,10 @@
 #include "tree_utils.h"
 
 
-template <typename T, u64 K, u64 P = K>
+template <typename T, typename V, u64 K, u64 P = K>
 // istg dont manually set the value of P or i will punch u, let me do my clever templating
+// T is the type of the point
+// V is the type of the value
 // K represents the dimensionality of the range tree
 // P represents the dimensionality of the overall range tree this range tree may be an orthogonal tree of
 // The use of P rather than just K is very handy in a lot of cases
@@ -24,18 +26,20 @@ public:
 
     struct RTNode
     {
-        RangeTree<T, K - 1, P>* orthogonal = nullptr;
+        RangeTree<T, V, K - 1, P>* orthogonal = nullptr;
         RTNode* left = nullptr;
         RTNode* right = nullptr;
 
         std::array<T, P> point;
 
-        T val;
+        T key;
         T st_min;
         T st_max;
 
-        explicit RTNode(T v) : val(v) {}
-        RTNode(T v, const std::array<T, P>& p) : val(v), point(p) {}
+        V val;
+
+        explicit RTNode(T v) : key(v) {}
+        RTNode(T k, const std::array<T, P>& p, V v) : key(k), point(p), val(v) {}
     };
 
 private:
@@ -47,18 +51,18 @@ public:
         return root;
     }
 
-    RTNode* create_tree(typename std::vector<std::array<T, P>>::iterator begin, typename std::vector<std::array<T, P>>::iterator end)
+    RTNode* create_tree(typename std::vector<std::pair<std::array<T, P>, V>>::iterator begin, typename std::vector<std::pair<std::array<T, P>, V>>::iterator end)
     {
         if (begin == end)
             return nullptr;
 
         if (begin + 1 == end)
         {
-            auto cur = new RTNode((*begin)[P - K], *begin);
-            cur->st_min = (*begin)[P - K];
-            cur->st_max = (*begin)[P - K];
+            auto cur = new RTNode((*begin).first[P - K], begin->first, (*begin).second);
+            cur->st_min = (*begin).first[P - K];
+            cur->st_max = (*begin).first[P - K];
 
-            auto orthogonal_tree = new RangeTree<T, K - 1, P>(begin, end);
+            auto orthogonal_tree = new RangeTree<T, V, K - 1, P>(begin, end);
             cur->orthogonal = orthogonal_tree;
 
             return cur;
@@ -68,13 +72,13 @@ public:
 
         RTNode* subtree_root = nullptr, *left = nullptr, *right = nullptr;
 
-        typename std::vector<std::array<T, P>>::iterator m = begin + length / 2;
+        typename std::vector<std::pair<std::array<T, P>, V>>::iterator m = begin + length / 2;
         if (length % 2 == 0)
             m--;
 
-        subtree_root = new RTNode((*m)[P - K], *m);
-        subtree_root->st_min = (*begin)[P - K];
-        subtree_root->st_max = (*(end - 1))[P - K];
+        subtree_root = new RTNode((*m).first[P - K], m->first, m->second);
+        subtree_root->st_min = (*begin).first[P - K];
+        subtree_root->st_max = (*(end - 1)).first[P - K];
 
         left = create_tree(begin, m + 1);
         right = create_tree(m + 1, end);
@@ -82,27 +86,29 @@ public:
         subtree_root->left = left;
         subtree_root->right = right;
 
-        auto orthogonal_tree = new RangeTree<T, K - 1, P>(begin, end);
+        auto orthogonal_tree = new RangeTree<T, V, K - 1, P>(begin, end);
         subtree_root->orthogonal = orthogonal_tree;
 
         return subtree_root;
     }
 
-    RangeTree(typename std::vector<std::array<T, P>>::iterator begin, typename std::vector<std::array<T, P>>::iterator end)
+    RangeTree() = default;
+
+    RangeTree(typename std::vector<std::pair<std::array<T, P>, V>>::iterator begin, typename std::vector<std::pair<std::array<T, P>, V>>::iterator end)
     {
         if (begin == end)
             return;
 
-        std::vector<std::array<T, P>> sorted_points(begin, end);
-        std::sort(sorted_points.begin(), sorted_points.end(), [] (const std::array<T, P>& a, const std::array<T, P>& b) { return a[P - K] < b[P - K]; });
+        std::vector<std::pair<std::array<T, P>, V>> sorted_points(begin, end);
+        std::sort(sorted_points.begin(), sorted_points.end(), [] (const std::pair<std::array<T, P>, V>& a, const std::pair<std::array<T, P>, V>& b) { return a.first[P - K] < b.first[P - K]; });
 
         root = create_tree(sorted_points.begin(), sorted_points.end());
     }
 
     
-    std::vector<std::array<T, P>> range_query(std::array<std::array<T, 2>, P>& range)
+    std::vector<V> range_query(std::array<std::array<T, 2>, P>& range)
     {
-        std::vector<std::array<T, P>> ret;
+        std::vector<V> ret;
 
         std::queue<RTNode*> q;
         q.push(root);
@@ -138,8 +144,8 @@ public:
 
 
 // template specialization for the base case K = 1
-template <typename T, u64 P>
-class RangeTree<T, 1, P>
+template <typename T, typename V, u64 P>
+class RangeTree<T, V, 1, P>
 {
 public:
     struct RTNode
@@ -149,12 +155,14 @@ public:
 
         std::array<T, P> point;
 
-        T val;
+        T key;
         T st_min;
         T st_max;
 
-        explicit RTNode(T v) : val(v) {}
-        RTNode(T v, const std::array<T, P>& p) : val(v), point(p) {}
+        V val;
+
+        explicit RTNode(T v) : key(v) {}
+        RTNode(T k, const std::array<T, P>& p, V v) : key(k), point(p), val(v) {}
     };
 
 private:
@@ -166,17 +174,16 @@ public:
         return root;
     }
 
-    RTNode* create_tree(typename std::vector<std::array<T, P>>::iterator begin, typename std::vector<std::array<T, P>>::iterator end)
+    RTNode* create_tree(typename std::vector<std::pair<std::array<T, P>, V>>::iterator begin, typename std::vector<std::pair<std::array<T, P>, V>>::iterator end)
     {
         if (begin == end)
             return nullptr;
 
         if (begin + 1 == end)
         {
-            auto cur = new RTNode((*begin)[P - 1], *begin);
-            cur->st_min = (*begin)[P - 1];
-            cur->st_max = (*begin)[P - 1];
-
+            auto cur = new RTNode((*begin).first[P - 1], begin->first, begin->second);
+            cur->st_min = (*begin).first[P - 1];
+            cur->st_max = (*begin).first[P - 1];
             return cur;
         }
 
@@ -184,13 +191,13 @@ public:
 
         RTNode* subtree_root = nullptr, *left = nullptr, *right = nullptr;
 
-        typename std::vector<std::array<T, P>>::iterator m = begin + length / 2;
+        typename std::vector<std::pair<std::array<T, P>, V>>::iterator m = begin + length / 2;
         if (length % 2 == 0)
             m--;
 
-        subtree_root = new RTNode((*m)[P - 1], *m);
-        subtree_root->st_min = (*begin)[P - 1];
-        subtree_root->st_max = (*(end - 1))[P - 1];
+        subtree_root = new RTNode((*m).first[P - 1], m->first, m->second);
+        subtree_root->st_min = (*begin).first[P - 1];
+        subtree_root->st_max = (*(end - 1)).first[P - 1];
 
         left = create_tree(begin, m + 1);
         right = create_tree(m + 1, end);
@@ -201,20 +208,22 @@ public:
         return subtree_root;
     }
 
-    RangeTree(typename std::vector<std::array<T, P>>::iterator begin, typename std::vector<std::array<T, P>>::iterator end)
+    RangeTree() = default;
+
+    RangeTree(typename std::vector<std::pair<std::array<T, P>, V>>::iterator begin, typename std::vector<std::pair<std::array<T, P>, V>>::iterator end)
     {
         if (begin == end)
             return;
 
-        std::vector<std::array<T, P>> sorted_points(begin, end);
-        std::sort(sorted_points.begin(), sorted_points.end(), [] (const std::array<T, P>& a, const std::array<T, P>& b) { return a[P - 1] < b[P - 1]; });
+        std::vector<std::pair<std::array<T, P>, V>> sorted_points(begin, end);
+        std::sort(sorted_points.begin(), sorted_points.end(), [] (const std::pair<std::array<T, P>, V>& a, const std::pair<std::array<T, P>, V>& b) { return a.first[P - 1] < b.first[P - 1]; });
 
         root = create_tree(sorted_points.begin(), sorted_points.end());
     }
 
-    std::vector<std::array<T, P>> range_query(std::array<std::array<T, 2>, P>& range)
+    std::vector<V> range_query(std::array<std::array<T, 2>, P>& range)
     {
-        std::vector<std::array<T, P>> ret;
+        std::vector<V> ret;
 
         std::queue<RTNode*> q;
         q.push(root);
@@ -227,7 +236,7 @@ public:
             if (cur == nullptr)
                 continue;
 
-            // subtree is completely contained within the range, now recurse and perform range query on the next dimension
+            // subtree is completely contained within the range, place all values in this subtree in the return array
             if (cur->st_min > range[P - 1][0] and cur->st_max < range[P - 1][1])
             {
                 std::queue<RTNode*> cq;
@@ -242,7 +251,7 @@ public:
                         continue;
 
                     if (cur_node->left == nullptr and cur_node->right == nullptr)
-                        ret.push_back(cur_node->point);
+                        ret.push_back(cur_node->val);
 
                     cq.push(cur_node->left);
                     cq.push(cur_node->right);

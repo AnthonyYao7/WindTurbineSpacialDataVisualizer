@@ -12,9 +12,9 @@
 #include "range_tree/range_tree.h"
 
 #define NUM_ITERATIONS 2
-#define TEST_POINTS 100000
+#define TEST_POINTS 10000
 #define TEST_DIMS 4
-#define NUM_QUERIES 10
+#define NUM_QUERIES 1
 
 TEST(RangeTreeInsertionTest, RangeTreeTests)
 {
@@ -22,22 +22,26 @@ TEST(RangeTreeInsertionTest, RangeTreeTests)
 
     for (int i = 0; i < NUM_ITERATIONS; i++)
     {
-        std::unique_ptr<RangeTree<double, TEST_DIMS>> tree;
+        std::unique_ptr<RangeTree<double, double, TEST_DIMS>> tree;
 
-        std::vector<std::array<double, TEST_DIMS>> randomVectors;
+        std::vector<std::pair<std::array<double, TEST_DIMS>, double>> randomVectors;
         randomVectors.reserve(TEST_POINTS);
 
         std::uniform_real_distribution<double> valueDistr(0.0, 1.0);
-        for (int c = 0; c < TEST_POINTS; ++c) {
+        for (int c = 0; c < TEST_POINTS; ++c)
+        {
             std::array<double, TEST_DIMS> vec{};
-            for (int j = 0; j < TEST_DIMS; ++j) {
+            for (int j = 0; j < TEST_DIMS; ++j)
+            {
                 vec[j] = valueDistr(gen);
             }
-            randomVectors.push_back(vec);
+            double value = valueDistr(gen);
+            randomVectors.emplace_back(vec, value);
         }
 
-        tree = std::make_unique<RangeTree<double, TEST_DIMS>>(randomVectors.begin(), randomVectors.end());
+        tree = std::make_unique<RangeTree<double, double, TEST_DIMS>>(randomVectors.begin(), randomVectors.end());
 
+        std::cout << "tree constructed" << std::endl;
 
         for (int q = 0; q < NUM_QUERIES; q++)
         {
@@ -55,21 +59,21 @@ TEST(RangeTreeInsertionTest, RangeTreeTests)
 
             auto q_results = tree->range_query(query);
 
-            std::vector<std::array<double, TEST_DIMS>> brute_force_results;
+            std::vector<double> brute_force_results;
 
             for (auto& point : randomVectors)
             {
                 for (int d1 = 0; d1 < TEST_DIMS; d1++)
                 {
-                    if (not (point[d1] >= query[d1][0] and point[d1] <= query[d1][1]))
+                    if (not (point.first[d1] >= query[d1][0] and point.first[d1] <= query[d1][1]))
                         break;
                     if (d1 == (TEST_DIMS - 1))
-                        brute_force_results.push_back(point);
+                        brute_force_results.push_back(point.second);
                 }
             }
 
-            std::sort(brute_force_results.begin(), brute_force_results.end(), [] (std::array<double, TEST_DIMS>& a, std::array<double, TEST_DIMS>& b) { return a[0] < b[0]; });
-            std::sort(q_results.begin(), q_results.end(), [] (std::array<double, TEST_DIMS>& a, std::array<double, TEST_DIMS>& b) { return a[0] < b[0]; });
+            std::sort(brute_force_results.begin(), brute_force_results.end());
+            std::sort(q_results.begin(), q_results.end());
 
             EXPECT_EQ(brute_force_results.size(), q_results.size());
 

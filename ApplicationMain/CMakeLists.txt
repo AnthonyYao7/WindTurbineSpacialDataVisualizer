@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.23)
 project(AppMain)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED json)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(AppMain main.cpp)
+add_executable(AppMain main.cpp DataRow.cpp ../include/DataRow.h DataColumn.cpp ../include/DataColumn.h CSV_File.cpp ../include/CSV_File.h)
 
 target_include_directories(AppMain PUBLIC ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS})
 
