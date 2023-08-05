@@ -9,8 +9,7 @@ add_executable(AppMain main.cpp DataRow.cpp ../include/DataRow.h DataColumn.cpp 
 
 target_include_directories(AppMain PUBLIC ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS})
 
-add_compile_options(-v -std=c++11 -stdlib=libc++)
-add_link_options(-stdlib=libc++)
+add_compile_options(-g -v)
 
 
 if (WIN32)

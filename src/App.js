@@ -12,6 +12,7 @@ function App() {
   // This useEffect hook will fetch the data when the component is mounted.
   useEffect(() => {
     if (bounds) {
+        console.log(bounds)
         // Make sure your backend accepts JSON in the request body.
         axios.post("http://localhost:8080/query", {coordinates: bounds.join(",")})
             .then((response) => {
