@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -10,9 +10,10 @@ import './Map.css';
 let drawnLayers = new L.FeatureGroup();
 
 
-function MyMap({ bounds, setBounds }) {
+const MyMap = memo(function Map({ bounds, setBounds }) {
   const [drawControl, setDrawControl] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const geoJsonLayerRef = useRef(null); // Create a ref to store the GeoJSON layer
 
   const MyComponent = () => {
     const map = useMap();
@@ -31,13 +32,18 @@ function MyMap({ bounds, setBounds }) {
         setDrawControl(control);
         map.addControl(control);
       }
-    }, [map, drawControl]);
+    }, []);
 
     useEffect(() => {
       axios.get(process.env.PUBLIC_URL + '/data/custom.geo.json')
       .then(res => {
-        const geoJsonLayer = L.geoJSON(res.data);
-        geoJsonLayer.addTo(map);
+        if (geoJsonLayerRef.current) {
+          map.removeLayer(geoJsonLayerRef.current);
+        }
+
+
+        geoJsonLayerRef.current = L.geoJSON(res.data);
+        geoJsonLayerRef.current.addTo(map);
 
         // Remove all previous layers when the user starts a new drawing
         map.on(L.Draw.Event.DRAWSTART, function () {
@@ -63,7 +69,7 @@ function MyMap({ bounds, setBounds }) {
             let isInsideUS = false;
         
             latlngs[0].forEach(point => {
-              const result = leafletPip.pointInLayer([point.lng, point.lat], geoJsonLayer, true);
+              const result = leafletPip.pointInLayer([point.lng, point.lat], geoJsonLayerRef.current, true);
               if(result.length !== 0) {
                 isInsideUS = true;
               }
@@ -87,7 +93,7 @@ function MyMap({ bounds, setBounds }) {
         map.off(L.Draw.Event.CREATED);
       };
 
-    }, [map]);
+    }, []);
 
     return null;
   };
@@ -111,6 +117,6 @@ function MyMap({ bounds, setBounds }) {
       {errorMessage && <div className="error-message">{errorMessage}</div>}
     </MapContainer>
   );
-}
+})
 
 export default MyMap;

@@ -6,6 +6,7 @@
 
 #include "DataRow.h"
 
+// splits by a delimiter
 std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
@@ -21,6 +22,7 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
     return res;
 }
 
+// ctor
 DataRow::DataRow(const std::string& row)
 {
     this->data = split(row, ",");
@@ -32,6 +34,7 @@ DataRow::DataRow(const std::string& row)
     }
 }
 
+// gets the column specified
 DataColumn DataRow::get_column(unsigned int col) const
 {
     if (col < this->data.size())
@@ -44,13 +47,15 @@ DataColumn DataRow::get_column(unsigned int col) const
             std::to_string(col));
 }
 
-
+// number of columns
 std::size_t DataRow::size() const
 {
     return this->data.size();
 }
 
-
+/*
+ * Indexing by column
+ */
 DataColumn DataRow::operator [] (unsigned int col) const
 {
     return this->get_column(col);

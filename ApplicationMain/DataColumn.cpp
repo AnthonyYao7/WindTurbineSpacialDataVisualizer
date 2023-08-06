@@ -7,6 +7,7 @@
 #include <utility>
 #include "DataColumn.h"
 
+// ctor
 DataColumn::DataColumn(std::string  d) : data(std::move(d)) {}
 
 double DataColumn::as_double() const

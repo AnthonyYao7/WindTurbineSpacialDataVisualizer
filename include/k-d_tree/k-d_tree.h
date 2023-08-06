@@ -24,9 +24,9 @@ public:
     struct KDTNode
     {
         std::array<T, K> point;
-        bool contains_point;
+        bool contains_point; // a kdtree node may not contain any nodes
         u64 dim{};
-        T plane;
+        T plane; // the hyperplane which divides the data in half
         KDTNode* left;
         KDTNode* right;
 

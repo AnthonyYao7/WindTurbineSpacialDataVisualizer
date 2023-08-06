@@ -14,6 +14,7 @@ CSV_File::CSV_File(std::ifstream f)
 
     auto header_row = DataRow(line);
 
+    // indexes the headers with a number
     for (int i = 0; i < header_row.size(); ++i)
     {
         this->headers[header_row.get_column(i).as_string()] = i;
@@ -25,6 +26,9 @@ CSV_File::CSV_File(std::ifstream f)
     f.close();
 }
 
+/*
+ * Does what it says
+ */
 std::vector<double> CSV_File::column_as_double(unsigned int col) const
 {
     std::vector<double> ret;
@@ -47,6 +51,9 @@ std::vector<double> CSV_File::column_as_double(unsigned int col) const
     return ret;
 }
 
+/*
+ * Does what it says
+ */
 std::vector<long long> CSV_File::column_as_int(unsigned int col) const
 {
     std::vector<long long> ret;
@@ -69,6 +76,9 @@ std::vector<long long> CSV_File::column_as_int(unsigned int col) const
     return ret;
 }
 
+/*
+ * Does what it says
+ */
 std::vector<std::string> CSV_File::column_as_string(unsigned int col) const
 {
     std::vector<std::string> ret;
@@ -91,7 +101,9 @@ std::vector<std::string> CSV_File::column_as_string(unsigned int col) const
     return ret;
 }
 
-
+/*
+ * Does what it says
+ */
 std::vector<double> CSV_File::column_as_double(const std::string& col) const
 {
     try
@@ -107,6 +119,9 @@ std::vector<double> CSV_File::column_as_double(const std::string& col) const
     }
 }
 
+/*
+ * Does what it says
+ */
 std::vector<long long> CSV_File::column_as_int(const std::string& col) const
 {
     try
@@ -122,6 +137,9 @@ std::vector<long long> CSV_File::column_as_int(const std::string& col) const
     }
 }
 
+/*
+ * Does what it says
+ */
 std::vector<std::string> CSV_File::column_as_string(const std::string& col) const
 {
     try
