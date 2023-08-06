@@ -44,3 +44,29 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add your table styles here */
+
+.table-container {
+  width: 70%; /* or any other percentage that suits your needs */
+  margin: 0 auto; /* this will center your table on the page */
+  overflow-x: auto;
+  text-align: center;
+}
+
+table {
+  width: 100%; /* this will make the table take up the full width of the .table-container div */
+  border-collapse: collapse; /* this will make the table's borders collapse into a single border */
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #ddd; /* this will add a border to your table cells */
+  padding: 8px; /* this will add some padding inside your table cells */
+}
+
+th {
+  background-color: #4CAF50; /* this will add a background color to your table headers */
+  color: white; /* this will make the text color in your table headers white */
+}
