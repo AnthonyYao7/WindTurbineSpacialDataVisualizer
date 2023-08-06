@@ -11,27 +11,27 @@ Wind Turbine Location Visualizer is a web application that visualizes wind turbi
 ## Getting Started
 These instructions will get you a copy of the project up and running locally.
 
-### Prerequisites
-- Node.js
-- NPM (comes with Node.js)
-- Your preferred IDE (like Visual Studio Code)
 
-### Installing
+### Building from Source
+## Prerequisites
+- Node.js
+- C++ compiler
+- Boost >= 1.75.0
+- CMake
+
 1. Clone the repository
 ```
 git clone https://github.com/AnthonyYao7/Group81HoldThe1_COP3530_P3.git
 ```
 2. Navigate into the project directory
-3. Install dependencies
+3. Build using CMake
+4. Run *npm run build*
+5. Done
 
-```
-npm install
-```
-4. Start the local server
+### Running
 
-```
-npm start
-```
-
-The application should now be running on 'http://localhost:3000'.
+1. Download a release for your OS
+2. cd <BaseDir>/App/ApplicationMain
+3. ./AppMain
+4. A browser window should pop up with our app running
 
