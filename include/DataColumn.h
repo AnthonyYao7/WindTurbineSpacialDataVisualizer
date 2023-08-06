@@ -7,7 +7,9 @@
 
 #include <string>
 
-
+/*
+ * Represents a single entry of a row in a csv file
+ */
 class DataColumn
 {
 std::string data;
@@ -18,6 +20,7 @@ public:
     [[nodiscard]] long long as_int() const;
     [[nodiscard]] const std::string& as_string() const;
 
+    // casting syntax sugar
     operator double() const;
     operator long long() const;
     operator std::string() const;

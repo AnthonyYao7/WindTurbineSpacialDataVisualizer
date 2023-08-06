@@ -11,6 +11,7 @@
 #include <sstream>
 #include <numeric>
 #include <cmath>
+#include <cstdlib>
 
 #include "trees.h"
 #include "CSV_File.h"
@@ -37,13 +38,9 @@ std::unordered_map<std::string, std::string> mime_types = {
         {"png", "image/png"},
 };
 
-struct Coordinates
-{
-    double lat;
-    double lon;
-};
-
-
+/*
+ * Checks if a file exists
+ */
 bool is_valid_file(const std::string& p)
 {
     std::string concat = ui_path + p;
@@ -52,6 +49,9 @@ bool is_valid_file(const std::string& p)
 }
 
 
+/*
+ * Reads a file from ui files
+ */
 std::string get_content(const std::string& p)
 {
     if (not is_valid_file(p))
@@ -73,26 +73,30 @@ std::string get_content(const std::string& p)
     // Close the file
     file_stream.close();
 
-    int last = 0;
+    int last_period = 0;
 
-    for (int i = p.size() - 1; i >= 0; --i)
+    for (int i = p.size() - 1; i >= 0; --i) // finds the last period so we can get the file extension
     {
         if (p[i] == '.')
         {
-            last = i;
+            last_period = i;
             break;
         }
     }
 
-    std::string file_extension = p.substr(last + 1);
+    std::string file_extension = p.substr(last_period + 1);
 
     std::string file_mime_type = mime_types[file_extension];
 
+    // return the content
     return "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(file_contents.length()) + "\r\nContent-Type: " + file_mime_type + "\r\n\r\n" + file_contents;
 }
 
 
-/// using long longs and doubles because we live in the L memory paradigm
+/*
+ * using long longs and doubles because we live in the L memory paradigm
+ * Represents a row in our wind turbine dataset
+ */
 struct WindmillData
 {
     double lon;
@@ -108,8 +112,8 @@ struct WindmillData
     double proj_cap;
     long long proj_num_turbines;
 
-    WindmillData() = default;
-    WindmillData(
+    WindmillData() = default; /**< default ctor */
+    WindmillData( /**< ctor */
         double lon,
         double lat,
         std::string  state,
@@ -139,12 +143,14 @@ struct WindmillData
 };
 
 
+// allows us to find the min value of a temporary vector declared as an initializer list, i.e., {1, 2, 3}, without having to make an lvalue
 std::size_t vector_min(const std::vector<size_t>& vec)
 {
     return *std::min_element(vec.begin(), vec.end());
 }
 
 
+// Represents the entire csv dataset
 struct WindmillDataset
 {
     std::vector<std::string> states;
@@ -162,7 +168,7 @@ struct WindmillDataset
 
     size_t num_rows;
 
-    explicit WindmillDataset(CSV_File csv)
+    explicit WindmillDataset(CSV_File csv) /**< ctor */
         : states(csv.column_as_string("Site.State"))
         , counties(csv.column_as_string("Site.County"))
         , years(csv.column_as_int("Year"))
@@ -176,6 +182,7 @@ struct WindmillDataset
         , lats(csv.column_as_double("Site.Latitude"))
         , lons(csv.column_as_double("Site.Longitude"))
     {
+        // the only reason for creating vector_min
         num_rows = vector_min({
             states.size(),
             counties.size(),
@@ -192,47 +199,47 @@ struct WindmillDataset
         });
     }
 
-    struct Iterator
+    struct Iterator // iterator over rows of our dataset
     {
         size_t ind = 0;
         WindmillDataset& dataset;
         explicit Iterator(WindmillDataset& dataset) : dataset(dataset) {}
 
-        Iterator& operator++()
+        Iterator& operator++() // precrement
         {
             ++ind;
             return *this;
         }
 
-        Iterator operator++(int a)
+        Iterator operator++(int a) // postcrement
         {
             ind++;
             return *this;
         }
 
-        Iterator& operator--()
+        Iterator& operator--() // predecrement
         {
             --ind;
             return *this;
         }
 
-        Iterator operator--(int a)
+        Iterator operator--(int a) // postdecrement
         {
             ind--;
             return *this;
         }
 
-        bool operator == (const Iterator& rhs) const
+        bool operator == (const Iterator& rhs) const // eq
         {
             return this->ind == rhs.ind;
         }
 
-        bool operator != (const Iterator& rhs) const
+        bool operator != (const Iterator& rhs) const // neq
         {
             return this->ind != rhs.ind;
         }
 
-        WindmillData operator*()
+        WindmillData operator*() // deref, returns a single row
         {
             return {
                 dataset.lons[ind],
@@ -251,12 +258,12 @@ struct WindmillDataset
         }
     };
 
-    Iterator begin()
+    Iterator begin() // points to first row
     {
         return Iterator(*this);
     }
 
-    Iterator end()
+    Iterator end() // points to one beyond last row
     {
         Iterator it(*this);
         it.ind = this->num_rows;
@@ -265,6 +272,9 @@ struct WindmillDataset
 };
 
 
+/*
+ * Calculates the surface area of a region bounded by two latitudes and two longitudes on earth
+ */
 double rectangular_area(double lat1, double lat2, double lon1, double lon2)
 {
     const double earth_radius_miles = 3963.1906f;
@@ -290,125 +300,87 @@ int main()
     std::vector<std::pair<std::array<double, 2>, WindmillData>> datapoints;
     datapoints.reserve(w_dataset.num_rows);
 
-    for (auto it = w_dataset.begin(); it != w_dataset.end(); ++it)
+    for (auto && it : w_dataset)
     {
-        auto d = *it;
+        auto d = it;
         datapoints.emplace_back(std::array<double, 2>({{d.lat, d.lon}}), d);
     }
 
-    std::cout << "Starting tree construction" << std::endl;
+    std::cout << "Starting tree construction..." << std::endl;
 
     RangeTree<double, WindmillData, 2> rtree(datapoints.begin(), datapoints.end());
     KD_Tree<double, WindmillData, 2> kdtree(datapoints.begin(), datapoints.end());
 
-    std::cout << "made it past tree construction" << std::endl;
+    std::cout << "Finished tree construction..." << std::endl;
 
     HttpServer server;
     server.config.port = 8080;
 
+    // serves files from /static/css/
     server.resource["^/static/css/[^\\/]+$"]["GET"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string p = request->path;
 
         *response << get_content(p);
     };
 
+
+    // serves files from /static/js/
     server.resource["^/static/js/[^\\/]+$"]["GET"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string p = request->path;
 
         *response << get_content(p);
     };
 
+    // serves files from /static/media/
     server.resource["^/static/media/[^\\/]+$"]["GET"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string p = request->path;
 
         *response << get_content(p);
     };
 
+    // serves files from /
     server.resource["^/[^\\/]+$"]["GET"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string p = request->path;
 
-        std::cout << "HI" << std::endl;
-
         *response << get_content(p);
     };
 
+    // serves files from /data/
     server.resource["^/data/[^\\/]+$"]["GET"] = [] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string p = request->path;
 
-        std::cout << "HI" << std::endl;
-
         *response << get_content(p);
     };
 
+    // endpoint for the query request
     server.resource["^/query"]["POST"] = [&rtree, &kdtree] (std::shared_ptr<HttpServer::Response> response, std::shared_ptr<HttpServer::Request> request) {
         std::string content = request->content.string();
 
-        /*
-         * the query looks like this:
-         * <lat1>,<lat2>,<lon1>,<lon2>
-         */
-        //{"coordinates":"-113.01951464913721,39.456595437139875,-103.35001894684127,44.60650516716939"}
-
         size_t startPos = content.find(":\"") + 2;
         size_t endPos = content.rfind('\"');
-        std::string parsed_content = content.substr(startPos, endPos - startPos);
+        std::string parsed_content = content.substr(startPos, endPos - startPos); // fix the request string
 
-        DataRow coords(parsed_content);
+        DataRow coords(parsed_content); // parse into a row
 
         double lon1 = coords[0], lon2 = coords[2], lat1 = coords[1], lat2 = coords[3];
 
-        std::cout << content << std::endl;
-
-        std::cout << "coords: " << lat1 << " " << lat2 << " " << lon1 << " " << lon2 << std::endl;
-
-//        *response <<  "HTTP/1.1 404 NOT FOUND\r\nContent-Length: 0\r\n\r\n";
-//        return;
-
-
-        auto start = high_resolution_clock::now();
-
+        auto start = high_resolution_clock::now(); // time how long the range tree takes
         std::vector<WindmillData> rtree_results = rtree.range_query({{{lat1, lat2}, {lon1, lon2}}});
-
         auto stop = high_resolution_clock::now();
 
         long long rangetree_took = duration_cast<milliseconds>(stop - start).count();
 
-
-        start = high_resolution_clock::now();
-
+        start = high_resolution_clock::now(); // time how long the kd tree takes
         std::vector<WindmillData> kdtree_results = kdtree.range_query({{{lat1, lat2}, {lon1, lon2}}});
-
         stop = high_resolution_clock::now();
 
         long long kdtree_took = duration_cast<milliseconds>(stop - start).count();
 
-        /*
-         * List of statistics to display:
-         * min year, max year
-         * average capacity
-         * tallest turbine, shortest turbine,
-         * average rotor diameter
-         * number of turbines
-         * turbine density
-         * area selected
-         */
-
-        /*
-         * Format output data like this:
-         * {"Earliest built": <num>,
-         *  "Latest built": <num>,
-         *  "Average capacity": <num>,
-         *  "Tallest turbine": <num>,
-         *  "Shortest turbine":
-         *  "Average rotor diameter",
-         *  "Turbine density",
-         *  "Area of selection"}
-         */
-
+        // statistics we want to display
         long long earliest_built = 0, latest_built = 0;
         double average_capacity = 0, tallest_turbine = 0, shortest_turbine = 0, average_rotor_diameter = 0, turbine_density = 0, selection_area = 0;
 
-        if (!rtree_results.empty())
+        if (!rtree_results.empty()) // calculate all the statistics if there are any returned wind turbines
         {
             earliest_built = std::min_element(
                     rtree_results.begin(),
@@ -452,7 +424,7 @@ int main()
             turbine_density = rtree_results.size() / selection_area;
         }
 
-        std::stringstream ss;
+        std::stringstream ss; // format as a json for easy parsing by the ui
         ss << "{\"Earliest built\":" << earliest_built << ',';
         ss << "\"Latest built\":" << latest_built << ',';
         ss << "\"Average capacity\":" << average_capacity << ',';
@@ -468,12 +440,22 @@ int main()
         const std::string resp = ss.str();
         std::cout << resp << std::endl;
 
+        // SEND IT
         *response << "HTTP/1.1 200 OK\r\nContent-Length: " + std::to_string(resp.length()) + "\r\nContent-Type: text\r\n\r\n" + resp;
     };
 
     std::thread server_thread([&server]() {
         server.start();
     });
+
+    // this nifty code allows you to just click on our executable and it will open the browser window for you
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    system("start http://localhost:8080/index.html");
+#elif __APPLE__
+    system("open http://localhost:8080/index.html");
+#elif __linux__
+    system("xdg-open http://localhost:8080/index.html");
+#endif
 
     server_thread.join();
 

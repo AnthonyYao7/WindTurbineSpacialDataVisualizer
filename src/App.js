@@ -9,15 +9,12 @@ function App() {
   const [bounds, setBounds] = useState(null);
   const [tableData, setTableData] = useState(null);
 
-  // This useEffect hook will fetch the data when the component is mounted.
+  // This useEffect hook will post the bounds to the app server when the user selects a rectangle
   useEffect(() => {
     if (bounds) {
-        console.log(bounds)
-        // Make sure your backend accepts JSON in the request body.
         axios.post("http://localhost:8080/query", {coordinates: bounds.join(",")})
             .then((response) => {
-                setTableData(response.data);
-                console.log(response.data);
+                setTableData(response.data); // sets the table with the response data
             })
             .catch((error) => {
                 console.log(error);

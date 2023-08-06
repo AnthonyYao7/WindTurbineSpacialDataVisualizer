@@ -10,7 +10,9 @@
 
 #include "DataColumn.h"
 
-
+/*
+ * Represents an entire row in the csv
+ */
 class DataRow
 {
 std::vector<std::string> data;
